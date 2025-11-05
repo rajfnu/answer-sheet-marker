@@ -1,0 +1,172 @@
+[tool.poetry]
+name = "answer-sheet-marker"
+version = "0.1.0"
+description = "AI-powered answer sheet marking system using multi-agent architecture"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+license = "MIT"
+packages = [{include = "answer_marker", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+# AI & Anthropic
+anthropic = "^0.40.0"
+
+# Data Validation & Models
+pydantic = "^2.9"
+pydantic-settings = "^2.6"
+
+# Document Processing
+pypdf = "^5.0.0"
+pdf2image = "^1.17.0"
+pillow = "^10.4.0"
+pytesseract = "^0.3.13"
+
+# Vector Database & Embeddings
+chromadb = "^0.5.0"
+sentence-transformers = "^3.0.0"
+
+# Utilities
+python-dotenv = "^1.0.0"
+loguru = "^0.7.2"
+tenacity = "^9.0.0"
+tiktoken = "^0.8.0"
+rich = "^13.9.0"
+
+# CLI
+typer = "^0.12.0"
+
+# API (Optional)
+fastapi = {version = "^0.115.0", optional = true}
+uvicorn = {version = "^0.32.0", optional = true}
+python-multipart = {version = "^0.0.12", optional = true}
+
+# Async support
+aiofiles = "^24.1.0"
+
+[tool.poetry.group.dev.dependencies]
+# Testing
+pytest = "^8.3.0"
+pytest-asyncio = "^0.24.0"
+pytest-cov = "^6.0.0"
+pytest-mock = "^3.14.0"
+
+# Code Quality
+black = "^24.10.0"
+ruff = "^0.7.0"
+mypy = "^1.13.0"
+isort = "^5.13.0"
+
+# Pre-commit
+pre-commit = "^4.0.0"
+
+# Documentation
+mkdocs = "^1.6.0"
+mkdocs-material = "^9.5.0"
+
+[tool.poetry.extras]
+api = ["fastapi", "uvicorn", "python-multipart"]
+
+[tool.poetry.scripts]
+answer-marker = "answer_marker.cli.commands:app"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# Black Configuration
+[tool.black]
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+# Ruff Configuration
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+# MyPy Configuration
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+follow_imports = "normal"
+ignore_missing_imports = true
+
+# Pytest Configuration
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src/answer_marker",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+
+# Coverage Configuration
+[tool.coverage.run]
+branch = true
+source = ["src/answer_marker"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+
+[tool.coverage.html]
+directory = "htmlcov"
