@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(poetry run pytest:*)",
+      "Bash(python -m answer_marker.cli.commands:*)",
+      "Bash(poetry run answer-marker:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
