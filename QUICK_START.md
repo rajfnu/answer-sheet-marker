@@ -9,9 +9,6 @@ This guide provides step-by-step instructions for implementing the Answer Sheet 
 ### Step 1: Initialize Project
 
 ```bash
-# Create project directory
-mkdir answer-sheet-marker
-cd answer-sheet-marker
 
 # Initialize Poetry project (or copy the provided pyproject.toml)
 poetry init
