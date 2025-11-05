@@ -4,6 +4,62 @@ import asyncio
 from pathlib import Path
 from typing import Optional, Annotated
 import typer
+
+# Monkey-patch Typer's rich_utils to fix make_metavar() bug
+# This fixes: TypeError: Parameter.make_metavar() missing 1 required positional argument: 'ctx'
+try:
+    from typer import rich_utils
+    from click import Context
+    import inspect
+
+    # Save original function
+    _original_print_options_panel = rich_utils._print_options_panel
+
+    def _patched_print_options_panel(*args, **kwargs):
+        """Patched version that passes ctx to make_metavar()."""
+        # Extract ctx and params from arguments
+        ctx = kwargs.get('ctx')
+        params = kwargs.get('params', [])
+
+        # If using positional args
+        if not ctx and len(args) >= 3:
+            params = args[1]
+            ctx = args[2]
+
+        # Temporarily store original make_metavar methods
+        original_methods = {}
+
+        # Patch each parameter's make_metavar call to include ctx
+        if ctx and params:
+            for param in params:
+                if hasattr(param, 'make_metavar'):
+                    original_methods[id(param)] = param.make_metavar
+                    # Create a wrapper that accepts the ctx argument
+                    def make_metavar_wrapper(orig_method=param.make_metavar, ctx=ctx):
+                        def wrapper():
+                            return orig_method(ctx)
+                        return wrapper
+                    param.make_metavar = make_metavar_wrapper()
+
+        try:
+            # Call original function with all arguments
+            result = _original_print_options_panel(*args, **kwargs)
+        finally:
+            # Restore original methods to avoid side effects
+            for param in params:
+                param_id = id(param)
+                if param_id in original_methods:
+                    param.make_metavar = original_methods[param_id]
+
+        return result
+
+    # Apply patch
+    rich_utils._print_options_panel = _patched_print_options_panel
+except Exception as e:
+    # If patching fails, Typer will fall back to standard behavior
+    import sys
+    print(f"Warning: Failed to patch Typer rich_utils: {e}", file=sys.stderr)
+
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.table import Table
@@ -29,6 +85,7 @@ app = typer.Typer(
     help="AI-powered answer sheet marking system using multi-agent architecture",
     add_completion=False,
     pretty_exceptions_enable=False,  # Disable rich exceptions
+    rich_markup_mode=None,  # Disable all rich markup
 )
 console = Console()
 
@@ -59,10 +116,10 @@ def create_agent_system(client):
 
 @app.command()
 def mark(
-    marking_guide: Optional[str] = typer.Option(default=None, help="Path to marking guide PDF"),
-    answer_sheets: Optional[str] = typer.Option(default=None, help="Path to answer sheets directory or single PDF"),
-    output_dir: str = typer.Option(default="./output", help="Output directory for reports"),
-    assessment_title: str = typer.Option(default="Assessment", help="Assessment title"),
+    marking_guide: Optional[str] = typer.Option(None, "--marking-guide", "-g", help="Path to marking guide PDF"),
+    answer_sheets: Optional[str] = typer.Option(None, "--answer-sheets", "-a", help="Path to answer sheets directory or single PDF"),
+    output_dir: str = typer.Option("./output", "--output-dir", "-o", help="Output directory for reports"),
+    assessment_title: str = typer.Option("Assessment", "--assessment-title", "-t", help="Assessment title"),
 ):
     """Mark answer sheets using AI-powered multi-agent system.
 
