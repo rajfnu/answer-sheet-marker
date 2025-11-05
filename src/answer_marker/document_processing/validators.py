@@ -58,9 +58,20 @@ class DocumentValidator:
 
             # Verify total matches sum of question marks
             if "questions" in structured_data:
-                question_marks_sum = sum(
-                    q.get("marks", 0) for q in structured_data["questions"]
-                )
+                # Convert marks to numbers, handling None and string values
+                marks_values = []
+                for q in structured_data["questions"]:
+                    marks = q.get("marks", 0)
+                    if marks is None:
+                        marks = 0
+                    elif isinstance(marks, str):
+                        try:
+                            marks = float(marks)
+                        except ValueError:
+                            marks = 0
+                    marks_values.append(marks)
+
+                question_marks_sum = sum(marks_values)
                 if abs(question_marks_sum - total_marks) > 0.01:
                     warnings.append(
                         f"Total marks ({total_marks}) doesn't match sum of question marks ({question_marks_sum})"
@@ -100,17 +111,25 @@ class DocumentValidator:
             errors.append(f"Question {question_num} has no ID")
 
         # Check question text
-        if "question_text" not in question or not question["question_text"].strip():
+        question_text = question.get("question_text", "")
+        if not question_text or (isinstance(question_text, str) and not question_text.strip()):
             errors.append(f"Question {question_num} has no text")
 
         # Check marks
-        if "marks" not in question:
+        if "marks" not in question or question["marks"] is None:
             warnings.append(f"Question {question_num} has no marks specified")
-        elif question["marks"] <= 0:
-            warnings.append(f"Question {question_num} has 0 or negative marks")
+        else:
+            # Try to convert marks to number
+            try:
+                marks_value = float(question["marks"]) if isinstance(question["marks"], str) else question["marks"]
+                if marks_value <= 0:
+                    warnings.append(f"Question {question_num} has 0 or negative marks")
+            except (ValueError, TypeError):
+                warnings.append(f"Question {question_num} has invalid marks value: {question['marks']}")
 
         # Check marking scheme
-        if "marking_scheme" not in question or not question["marking_scheme"].strip():
+        marking_scheme = question.get("marking_scheme", "")
+        if not marking_scheme or (isinstance(marking_scheme, str) and not marking_scheme.strip()):
             warnings.append(f"Question {question_num} has no marking scheme")
 
         # Check question type
@@ -239,7 +258,10 @@ class DocumentValidator:
                 with_schemes = sum(
                     1
                     for q in questions
-                    if "marking_scheme" in q and q["marking_scheme"].strip()
+                    if "marking_scheme" in q
+                    and q["marking_scheme"] is not None
+                    and isinstance(q["marking_scheme"], str)
+                    and q["marking_scheme"].strip()
                 )
                 scheme_ratio = with_schemes / len(questions)
 
@@ -247,7 +269,10 @@ class DocumentValidator:
                 with_samples = sum(
                     1
                     for q in questions
-                    if "sample_answer" in q and q["sample_answer"].strip()
+                    if "sample_answer" in q
+                    and q["sample_answer"] is not None
+                    and isinstance(q["sample_answer"], str)
+                    and q["sample_answer"].strip()
                 )
                 sample_ratio = with_samples / len(questions)
 

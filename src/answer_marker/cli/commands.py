@@ -2,16 +2,17 @@
 
 import asyncio
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Annotated
 import typer
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.table import Table
 from rich.panel import Panel
-from anthropic import Anthropic
 from loguru import logger
 
 from answer_marker.config import settings
+from answer_marker.llm.factory import create_llm_client_from_config
+from answer_marker.llm.compat import LLMClientCompat
 from answer_marker.document_processing import DocumentProcessor
 from answer_marker.core.orchestrator import create_orchestrator_agent
 from answer_marker.agents.question_analyzer import create_question_analyzer_agent
@@ -27,16 +28,16 @@ app = typer.Typer(
     name="answer-marker",
     help="AI-powered answer sheet marking system using multi-agent architecture",
     add_completion=False,
-    rich_markup_mode=None,  # Disable rich help to avoid rendering issues
+    pretty_exceptions_enable=False,  # Disable rich exceptions
 )
 console = Console()
 
 
-def create_agent_system(client: Anthropic):
+def create_agent_system(client):
     """Create and wire up all agents.
 
     Args:
-        client: Anthropic client instance
+        client: LLM client instance (Anthropic-compatible via LLMClientCompat)
 
     Returns:
         Orchestrator agent with all specialized agents
@@ -58,18 +59,10 @@ def create_agent_system(client: Anthropic):
 
 @app.command()
 def mark(
-    marking_guide: str = typer.Option(
-        None, "--guide", "-g", help="Path to marking guide PDF"
-    ),
-    answer_sheets: str = typer.Option(
-        None, "--answers", "-a", help="Path to answer sheets directory or single PDF"
-    ),
-    output_dir: str = typer.Option(
-        "./output", "--output", "-o", help="Output directory for reports"
-    ),
-    assessment_title: str = typer.Option(
-        "Assessment", "--title", "-t", help="Assessment title"
-    ),
+    marking_guide: Optional[str] = typer.Option(default=None, help="Path to marking guide PDF"),
+    answer_sheets: Optional[str] = typer.Option(default=None, help="Path to answer sheets directory or single PDF"),
+    output_dir: str = typer.Option(default="./output", help="Output directory for reports"),
+    assessment_title: str = typer.Option(default="Assessment", help="Assessment title"),
 ):
     """Mark answer sheets using AI-powered multi-agent system.
 
@@ -123,8 +116,12 @@ async def _mark_async(
     """Async implementation of marking workflow."""
 
     try:
-        # Initialize client and processors
-        client = Anthropic(api_key=settings.anthropic_api_key)
+        # Initialize LLM client using factory (supports multiple providers)
+        llm_client = create_llm_client_from_config(settings)
+        # Wrap with compatibility layer for Anthropic-style API
+        client = LLMClientCompat(llm_client)
+
+        # Initialize processors and agents
         doc_processor = DocumentProcessor(client)
         orchestrator = create_agent_system(client)
 
@@ -302,13 +299,13 @@ def _display_summary(reports: list[EvaluationReport], output_dir: Path):
 
 @app.command()
 def calibrate(
-    marking_guide: str = typer.Option(
+    marking_guide: Optional[str] = typer.Option(
         None, "--guide", "-g", help="Path to marking guide PDF"
     ),
-    sample_answer: str = typer.Option(
+    sample_answer: Optional[str] = typer.Option(
         None, "--sample", "-s", help="Path to sample answer PDF"
     ),
-    expected_score: float = typer.Option(
+    expected_score: Optional[float] = typer.Option(
         None, "--score", "-sc", help="Expected score for the sample answer"
     ),
 ):
@@ -356,8 +353,12 @@ async def _calibrate_async(
     """Async implementation of calibration."""
 
     try:
-        # Initialize system
-        client = Anthropic(api_key=settings.anthropic_api_key)
+        # Initialize LLM client using factory (supports multiple providers)
+        llm_client = create_llm_client_from_config(settings)
+        # Wrap with compatibility layer for Anthropic-style API
+        client = LLMClientCompat(llm_client)
+
+        # Initialize processors and agents
         doc_processor = DocumentProcessor(client)
         orchestrator = create_agent_system(client)
 

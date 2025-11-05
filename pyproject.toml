@@ -42,6 +42,10 @@ fastapi = {version = "^0.115.0", optional = true}
 uvicorn = {version = "^0.32.0", optional = true}
 python-multipart = {version = "^0.0.12", optional = true}
 
+# LLM Providers (Optional)
+openai = {version = "^1.0.0", optional = true}
+requests = "^2.31.0"  # For Ollama adapter
+
 # Async support
 aiofiles = "^24.1.0"
 
@@ -67,6 +71,7 @@ mkdocs-material = "^9.5.0"
 
 [tool.poetry.extras]
 api = ["fastapi", "uvicorn", "python-multipart"]
+llm = ["openai"]  # Optional LLM providers (OpenAI, Together.ai)
 
 [tool.poetry.scripts]
 answer-marker = "answer_marker.cli.commands:app"

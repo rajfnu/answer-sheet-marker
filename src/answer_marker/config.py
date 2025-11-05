@@ -17,19 +17,32 @@ class Settings(BaseSettings):
     """
 
     # ============================================================
-    # API Configuration
+    # LLM Configuration (Flexible Provider Support)
     # ============================================================
-    anthropic_api_key: str
-    """Anthropic API key for Claude access. Required."""
+    llm_provider: str = "anthropic"
+    """LLM provider to use: 'anthropic', 'ollama', 'openai', 'together'. Default: anthropic"""
+
+    llm_model: Optional[str] = None
+    """Model name for the selected provider. If None, uses provider-specific default."""
+
+    llm_api_key: Optional[str] = None
+    """API key for the LLM provider (required for anthropic, openai, together)."""
+
+    llm_base_url: Optional[str] = None
+    """Base URL for LLM API (for Ollama, Together, or custom endpoints). Default: provider-specific"""
+
+    # Backward compatibility with old Anthropic-specific settings
+    anthropic_api_key: Optional[str] = None
+    """[DEPRECATED] Use llm_api_key instead. For backward compatibility only."""
 
     claude_model: str = "claude-sonnet-4-5-20250929"
-    """Claude model to use for evaluations. Default: claude-sonnet-4-5-20250929"""
+    """[DEPRECATED] Use llm_model instead. Default Claude model."""
 
     max_tokens: int = 8192
-    """Maximum tokens for Claude API responses. Default: 8192"""
+    """Maximum tokens for LLM responses. Default: 8192"""
 
     temperature: float = 0.0
-    """Temperature for Claude API (0.0 = deterministic, important for consistent marking). Default: 0.0"""
+    """Temperature for LLM (0.0 = deterministic, important for consistent marking). Default: 0.0"""
 
     # ============================================================
     # Processing Configuration
@@ -141,6 +154,37 @@ class Settings(BaseSettings):
         for path_str in paths_to_create:
             path = Path(path_str)
             path.mkdir(parents=True, exist_ok=True)
+
+    def get_llm_config(self) -> dict:
+        """Get LLM configuration with backward compatibility.
+
+        Returns:
+            Dictionary with provider, model, api_key, and base_url
+        """
+        # Resolve API key with backward compatibility
+        api_key = self.llm_api_key or self.anthropic_api_key
+
+        # Resolve model with provider-specific defaults
+        model = self.llm_model
+        if not model:
+            # Use provider-specific defaults
+            if self.llm_provider == "anthropic":
+                model = self.claude_model
+            elif self.llm_provider == "ollama":
+                model = "llama3"  # Default Ollama model
+            elif self.llm_provider == "openai":
+                model = "gpt-4"
+            elif self.llm_provider == "together":
+                model = "meta-llama/Llama-3-70b-chat-hf"
+
+        return {
+            "provider": self.llm_provider,
+            "model": model,
+            "api_key": api_key,
+            "base_url": self.llm_base_url,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+        }
 
     def model_post_init(self, __context) -> None:
         """Called after model initialization to perform additional setup."""
