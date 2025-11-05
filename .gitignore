@@ -49,6 +49,10 @@ htmlcov/
 .hypothesis/
 *.cover
 
+# Temporary test files
+test_*.py
+!tests/test_*.py
+
 # Logs
 logs/
 *.log
