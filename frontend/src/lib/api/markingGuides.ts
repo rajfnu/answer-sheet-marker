@@ -1,19 +1,22 @@
 import apiClient from '../api';
 
-// Temporary inline type definition to bypass module import issue
+// Temporary inline type definition to match backend response schema
 interface QuestionSummary {
-  question_number: number;
+  question_id: string;
+  question_number: string;
   max_marks: number;
-  marking_criteria: string;
+  question_type: string;
+  has_rubric: boolean;
 }
 
 interface MarkingGuideResponse {
-  id: string;
-  filename: string;
-  upload_time: string;
-  total_questions: number;
+  guide_id: string;
+  title: string;
   total_marks: number;
+  num_questions: number;
   questions: QuestionSummary[];
+  analyzed: boolean;
+  created_at: string;
 }
 
 export async function uploadMarkingGuide(file: File): Promise<MarkingGuideResponse> {

@@ -5,20 +5,23 @@ import Button from '../components/ui/Button';
 import { uploadMarkingGuide } from '../lib/api/markingGuides';
 import { FileText, CheckCircle2 } from 'lucide-react';
 
-// Temporary inline type definition
+// Temporary inline type definition to match backend response schema
 interface QuestionSummary {
-  question_number: number;
+  question_id: string;
+  question_number: string;
   max_marks: number;
-  marking_criteria: string;
+  question_type: string;
+  has_rubric: boolean;
 }
 
 interface MarkingGuideResponse {
-  id: string;
-  filename: string;
-  upload_time: string;
-  total_questions: number;
+  guide_id: string;
+  title: string;
   total_marks: number;
+  num_questions: number;
   questions: QuestionSummary[];
+  analyzed: boolean;
+  created_at: string;
 }
 
 type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
@@ -140,15 +143,15 @@ export default function UploadAssessment() {
             <div className="grid grid-cols-2 gap-4 p-4 bg-white rounded-lg border border-green-200">
               <div>
                 <p className="text-sm text-muted-foreground">Assessment ID</p>
-                <p className="font-mono text-sm font-medium">{uploadedGuide.id}</p>
+                <p className="font-mono text-sm font-medium">{uploadedGuide.guide_id}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Filename</p>
-                <p className="text-sm font-medium truncate">{uploadedGuide.filename}</p>
+                <p className="text-sm text-muted-foreground">Title</p>
+                <p className="text-sm font-medium truncate">{uploadedGuide.title}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Questions</p>
-                <p className="text-2xl font-bold text-primary">{uploadedGuide.total_questions}</p>
+                <p className="text-2xl font-bold text-primary">{uploadedGuide.num_questions}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Marks</p>
