@@ -127,6 +127,33 @@ class JobResponse(BaseModel):
         }
 
 
+class QuestionEvaluationResponse(BaseModel):
+    """Question-level evaluation details."""
+
+    question_id: str = Field(..., description="Question identifier")
+    marks_awarded: float = Field(..., description="Marks awarded for this question")
+    max_marks: float = Field(..., description="Maximum marks for this question")
+    percentage: float = Field(..., description="Percentage score for this question")
+    overall_quality: str = Field(..., description="Quality assessment")
+    strengths: List[str] = Field(..., description="Answer strengths")
+    weaknesses: List[str] = Field(..., description="Answer weaknesses")
+    requires_human_review: bool = Field(..., description="Whether this question needs review")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "question_id": "Q1",
+                "marks_awarded": 8.5,
+                "max_marks": 10.0,
+                "percentage": 85.0,
+                "overall_quality": "good",
+                "strengths": ["Clear explanation", "Good examples"],
+                "weaknesses": ["Missing key concept"],
+                "requires_human_review": False,
+            }
+        }
+
+
 class ScoreSummary(BaseModel):
     """Score summary for a student."""
 
@@ -149,6 +176,9 @@ class MarkingReportResponse(BaseModel):
     requires_review: bool = Field(..., description="Whether human review is required")
     processing_time: float = Field(..., description="Processing time in seconds")
     marked_at: datetime = Field(default_factory=datetime.now, description="Marking timestamp")
+    question_evaluations: Optional[List[QuestionEvaluationResponse]] = Field(
+        None, description="Question-by-question evaluation breakdown"
+    )
 
     class Config:
         json_schema_extra = {

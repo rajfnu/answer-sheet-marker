@@ -2,10 +2,12 @@
 
 import uuid
 import shutil
+import asyncio
 from pathlib import Path
 from typing import List
 from datetime import datetime
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status, BackgroundTasks
+from fastapi.responses import StreamingResponse
 from loguru import logger
 
 from ..config import api_settings
@@ -16,9 +18,11 @@ from ..models.responses import (
     MarkingReportResponse,
     QuestionSummary,
     ScoreSummary,
+    QuestionEvaluationResponse,
 )
 from ..exceptions import FileUploadError, ResourceNotFoundError
 from ..services.marking_service import marking_service
+from ..progress_tracker import progress_tracker
 
 router = APIRouter(prefix="/api/v1", tags=["Marking"])
 
@@ -56,10 +60,13 @@ async def upload_marking_guide(
 
         logger.info(f"Saved uploaded file: {file_path}")
 
-        # Process marking guide
-        guide_id, marking_guide = await marking_service.upload_marking_guide(
+        # Process marking guide (with caching!)
+        guide_id, marking_guide, cached = await marking_service.upload_marking_guide(
             file_path, file.filename
         )
+
+        if cached:
+            logger.info(f"⚡ Returned cached guide {guide_id} - 0 API calls!")
 
         # Build response
         question_summaries = [
@@ -103,7 +110,24 @@ async def upload_marking_guide(
 )
 async def list_marking_guides() -> List[str]:
     """List all uploaded marking guides."""
-    return marking_service.list_marking_guides()
+    return await marking_service.list_marking_guides()
+
+
+@router.get(
+    "/progress/{job_id}",
+    summary="Get Upload Progress (SSE)",
+    description="Stream real-time progress updates for marking guide upload",
+)
+async def get_upload_progress(job_id: str):
+    """Stream Server-Sent Events for upload progress."""
+    return StreamingResponse(
+        progress_tracker.get_progress_stream(job_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+        },
+    )
 
 
 @router.get(
@@ -115,7 +139,7 @@ async def list_marking_guides() -> List[str]:
 async def get_marking_guide(guide_id: str) -> MarkingGuideResponse:
     """Get marking guide details."""
     try:
-        marking_guide = marking_service.get_marking_guide(guide_id)
+        marking_guide = await marking_service.get_marking_guide(guide_id)
 
         question_summaries = [
             QuestionSummary(
@@ -180,14 +204,28 @@ async def mark_answer_sheet(
 
         logger.info(f"Saved uploaded answer sheet: {file_path}")
 
-        # Mark the answer sheet
-        report = await marking_service.mark_answer_sheet(
+        # Mark the answer sheet (with caching!)
+        report_id, report, cached = await marking_service.mark_answer_sheet(
             marking_guide_id, student_id, file_path
         )
 
-        # Build response
-        report_id = f"report_{uuid.uuid4().hex[:8]}"
-        marking_service.reports[report_id] = report
+        if cached:
+            logger.info(f"⚡ Returned cached report {report_id} - 0 API calls!")
+
+        # Map question evaluations to response models
+        question_evaluations = [
+            QuestionEvaluationResponse(
+                question_id=qe.question_id,
+                marks_awarded=qe.marks_awarded,
+                max_marks=qe.max_marks,
+                percentage=qe.percentage,
+                overall_quality=qe.overall_quality,
+                strengths=qe.strengths,
+                weaknesses=qe.weaknesses,
+                requires_human_review=qe.requires_human_review,
+            )
+            for qe in report.question_evaluations
+        ]
 
         return MarkingReportResponse(
             report_id=report_id,
@@ -201,10 +239,11 @@ async def mark_answer_sheet(
                 grade=report.scoring_result.grade,
                 passed=report.scoring_result.passed,
             ),
-            num_questions=len(report.question_results),
+            num_questions=len(report.question_evaluations),
             requires_review=report.requires_review,
             processing_time=report.processing_time,
             marked_at=datetime.now(),
+            question_evaluations=question_evaluations,
         )
 
     except ResourceNotFoundError as e:
@@ -230,7 +269,7 @@ async def mark_answer_sheet(
 )
 async def list_reports() -> List[str]:
     """List all generated marking reports."""
-    return marking_service.list_reports()
+    return await marking_service.list_reports()
 
 
 @router.get(
@@ -242,12 +281,30 @@ async def list_reports() -> List[str]:
 async def get_report(report_id: str) -> MarkingReportResponse:
     """Get marking report details."""
     try:
-        report = marking_service.get_report(report_id)
+        report = await marking_service.get_report(report_id)
+
+        # Get marking_guide_id from storage metadata
+        marking_guide_id = marking_service.storage.metadata.get("reports", {}).get(report_id, {}).get("marking_guide_id", "")
+
+        # Map question evaluations to response models
+        question_evaluations = [
+            QuestionEvaluationResponse(
+                question_id=qe.question_id,
+                marks_awarded=qe.marks_awarded,
+                max_marks=qe.max_marks,
+                percentage=qe.percentage,
+                overall_quality=qe.overall_quality,
+                strengths=qe.strengths,
+                weaknesses=qe.weaknesses,
+                requires_human_review=qe.requires_human_review,
+            )
+            for qe in report.question_evaluations
+        ]
 
         return MarkingReportResponse(
             report_id=report_id,
             student_id=report.student_id,
-            marking_guide_id="",  # Not stored in report currently
+            marking_guide_id=marking_guide_id,
             assessment_title=report.assessment_title,
             score=ScoreSummary(
                 total_marks=report.scoring_result.total_marks,
@@ -256,10 +313,11 @@ async def get_report(report_id: str) -> MarkingReportResponse:
                 grade=report.scoring_result.grade,
                 passed=report.scoring_result.passed,
             ),
-            num_questions=len(report.question_results),
+            num_questions=len(report.question_evaluations),
             requires_review=report.requires_review,
             processing_time=report.processing_time,
             marked_at=datetime.now(),
+            question_evaluations=question_evaluations,
         )
 
     except ResourceNotFoundError:

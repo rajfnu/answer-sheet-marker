@@ -1,8 +1,20 @@
 import { NavLink } from 'react-router-dom';
-import { Upload, FileCheck, BarChart3 } from 'lucide-react';
+import { Home, FolderOpen, Upload, FileCheck, BarChart3 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const navItems = [
+  {
+    to: '/',
+    icon: Home,
+    label: 'Home',
+    description: 'Dashboard overview',
+  },
+  {
+    to: '/assessments',
+    icon: FolderOpen,
+    label: 'Assessments',
+    description: 'View all assessments',
+  },
   {
     to: '/upload-assessment',
     icon: Upload,

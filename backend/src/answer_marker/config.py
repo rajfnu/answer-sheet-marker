@@ -65,6 +65,9 @@ class Settings(BaseSettings):
     # ============================================================
     # Storage Configuration
     # ============================================================
+    data_dir: str = "./data"
+    """Base directory for all data storage (guides, reports, cache). Default: ./data"""
+
     vector_db_path: str = "./data/vector_db"
     """Path to vector database storage for RAG functionality. Default: ./data/vector_db"""
 
@@ -133,7 +136,7 @@ class Settings(BaseSettings):
 
     # Pydantic Settings configuration
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file="../.env",  # Look for .env in parent directory (project root)
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore"  # Ignore extra environment variables
@@ -142,6 +145,7 @@ class Settings(BaseSettings):
     def validate_paths(self) -> None:
         """Validate and create necessary directories."""
         paths_to_create = [
+            self.data_dir,
             self.vector_db_path,
             self.output_directory,
         ]

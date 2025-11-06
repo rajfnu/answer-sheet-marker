@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Upload, FileCheck, BarChart3, Zap } from 'lucide-react';
+import { Upload, FileCheck, BarChart3, Zap, FolderOpen } from 'lucide-react';
 
 const features = [
   {
@@ -8,6 +8,13 @@ const features = [
     description: 'Upload your marking guide and assessment criteria in PDF format',
     to: '/upload-assessment',
     color: 'text-blue-500',
+  },
+  {
+    icon: FolderOpen,
+    title: 'View Assessments',
+    description: 'Browse all uploaded assessments and their marking status',
+    to: '/assessments',
+    color: 'text-orange-500',
   },
   {
     icon: FileCheck,
@@ -44,7 +51,7 @@ export default function Home() {
       </div>
 
       {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {features.map((feature) => {
           const Icon = feature.icon;
           return (

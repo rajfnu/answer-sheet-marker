@@ -49,6 +49,12 @@ requests = "^2.31.0"  # For Ollama adapter
 # Async support
 aiofiles = "^24.1.0"
 
+# Observability & Monitoring
+langfuse = "^2.50.0"
+
+# Hashing & Caching
+xxhash = "^3.4.1"
+
 [tool.poetry.group.dev.dependencies]
 # Testing
 pytest = "^8.3.0"

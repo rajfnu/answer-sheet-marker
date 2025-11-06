@@ -42,3 +42,16 @@ export async function getMarkingGuide(id: string): Promise<MarkingGuideResponse>
   );
   return response.data;
 }
+
+export async function listMarkingGuides(): Promise<string[]> {
+  const response = await apiClient.get<string[]>('/api/v1/marking-guides');
+  return response.data;
+}
+
+export async function getAllMarkingGuidesWithDetails(): Promise<MarkingGuideResponse[]> {
+  const guideIds = await listMarkingGuides();
+  const guides = await Promise.all(
+    guideIds.map(id => getMarkingGuide(id))
+  );
+  return guides;
+}
