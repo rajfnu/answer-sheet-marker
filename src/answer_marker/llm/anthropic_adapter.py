@@ -23,7 +23,12 @@ class AnthropicAdapter(BaseLLMClient):
             **kwargs: Additional configuration
         """
         super().__init__(model, **kwargs)
-        self.client = Anthropic(api_key=api_key)
+        # Configure timeout: 60s for connection, 300s for read (5 minutes total)
+        self.client = Anthropic(
+            api_key=api_key,
+            timeout=300.0,  # 5 minute timeout for API calls
+            max_retries=3   # Retry up to 3 times on network errors
+        )
         logger.info(f"Initialized Anthropic adapter with model: {model}")
 
     def create_message(
@@ -51,17 +56,24 @@ class AnthropicAdapter(BaseLLMClient):
             Standardized LLMResponse
         """
         try:
-            # Call Anthropic API
-            response = self.client.messages.create(
-                model=self.model,
-                system=system,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                tools=tools or [],
-                tool_choice=tool_choice,
+            # Build API call parameters
+            api_params = {
+                "model": self.model,
+                "system": system,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
                 **kwargs
-            )
+            }
+
+            # Only include tools and tool_choice if tools are provided
+            if tools:
+                api_params["tools"] = tools
+                if tool_choice:
+                    api_params["tool_choice"] = tool_choice
+
+            # Call Anthropic API
+            response = self.client.messages.create(**api_params)
 
             # Extract tool uses if any
             tool_uses = []
