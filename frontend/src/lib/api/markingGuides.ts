@@ -1,5 +1,20 @@
 import apiClient from '../api';
-import { MarkingGuideResponse } from '../../types/api';
+
+// Temporary inline type definition to bypass module import issue
+interface QuestionSummary {
+  question_number: number;
+  max_marks: number;
+  marking_criteria: string;
+}
+
+interface MarkingGuideResponse {
+  id: string;
+  filename: string;
+  upload_time: string;
+  total_questions: number;
+  total_marks: number;
+  questions: QuestionSummary[];
+}
 
 export async function uploadMarkingGuide(file: File): Promise<MarkingGuideResponse> {
   const formData = new FormData();

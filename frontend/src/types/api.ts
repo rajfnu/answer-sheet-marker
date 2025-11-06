@@ -1,5 +1,3 @@
-// API Response Types based on backend schema
-
 export interface MarkingGuideResponse {
   id: string;
   filename: string;
@@ -46,7 +44,6 @@ export interface HealthResponse {
   version: string;
 }
 
-// Form Types
 export interface UploadMarkingGuideRequest {
   file: File;
 }
@@ -57,7 +54,6 @@ export interface MarkAnswerSheetRequest {
   file: File;
 }
 
-// UI State Types
 export interface UploadProgress {
   fileName: string;
   progress: number;

@@ -3,8 +3,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import FileUpload from '../components/FileUpload';
 import Button from '../components/ui/Button';
 import { uploadMarkingGuide } from '../lib/api/markingGuides';
-import { MarkingGuideResponse } from '../types/api';
 import { FileText, CheckCircle2 } from 'lucide-react';
+
+// Temporary inline type definition
+interface QuestionSummary {
+  question_number: number;
+  max_marks: number;
+  marking_criteria: string;
+}
+
+interface MarkingGuideResponse {
+  id: string;
+  filename: string;
+  upload_time: string;
+  total_questions: number;
+  total_marks: number;
+  questions: QuestionSummary[];
+}
 
 type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
