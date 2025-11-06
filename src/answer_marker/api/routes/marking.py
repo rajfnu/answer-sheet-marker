@@ -65,7 +65,7 @@ async def upload_marking_guide(
         question_summaries = [
             QuestionSummary(
                 question_id=q.id,
-                question_number=q.question_number,
+                question_number=q.id,  # Use id as question_number
                 max_marks=q.max_marks,
                 question_type=q.question_type,
                 has_rubric=bool(q.evaluation_criteria),
@@ -120,7 +120,7 @@ async def get_marking_guide(guide_id: str) -> MarkingGuideResponse:
         question_summaries = [
             QuestionSummary(
                 question_id=q.id,
-                question_number=q.question_number,
+                question_number=q.id,  # Use id as question_number
                 max_marks=q.max_marks,
                 question_type=q.question_type,
                 has_rubric=bool(q.evaluation_criteria),
