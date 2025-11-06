@@ -1,0 +1,49 @@
+# Answer Sheet Marker - Development Docker Compose
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: answer-marker-backend-dev
+    ports:
+      - "8001:8001"
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8001
+      - API_CORS_ORIGINS=http://localhost:3000,http://localhost:8080,http://localhost:5173
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - LLM_PROVIDER=anthropic
+      - LLM_MODEL=claude-sonnet-4-5-20250929
+    volumes:
+      - ./backend:/app
+      - /app/.venv  # Prevent overwriting venv
+      - ./backend/data:/app/data
+    command: uvicorn answer_marker.api.main:app --host 0.0.0.0 --port 8001 --reload
+    restart: unless-stopped
+    networks:
+      - answer-marker-network
+
+  # Frontend development server (will be added once created)
+  # frontend:
+  #   image: node:20-alpine
+  #   container_name: answer-marker-frontend-dev
+  #   working_dir: /app
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - VITE_API_BASE_URL=http://localhost:8001
+  #   volumes:
+  #     - ./frontend:/app
+  #     - /app/node_modules  # Prevent overwriting node_modules
+  #   command: npm run dev -- --host 0.0.0.0
+  #   depends_on:
+  #     - backend
+  #   restart: unless-stopped
+  #   networks:
+  #     - answer-marker-network
+
+networks:
+  answer-marker-network:
+    driver: bridge
