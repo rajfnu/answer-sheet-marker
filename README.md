@@ -63,98 +63,278 @@ The AI Answer Sheet Marker is a sophisticated system that automates the evaluati
 | **QA Agent** | Reviews consistency and flags issues | Quality reports |
 | **Report Generator** | Produces comprehensive marking reports | Final reports |
 
-## 🚀 Quick Start
+## 🚀 Getting Started
+
+This guide will help you set up and run the Answer Sheet Marker system locally in **under 10 minutes**.
 
 ### Prerequisites
 
-- Python 3.11 or higher
-- Poetry for dependency management
-- Anthropic API key
-- Tesseract OCR (for scanned documents)
+Before you begin, make sure you have the following installed:
 
-### Installation
+- **Python 3.11+** - [Download here](https://www.python.org/downloads/)
+- **Node.js 18+** - [Download here](https://nodejs.org/)
+- **Poetry** - Python dependency manager
+  ```bash
+  curl -sSL https://install.python-poetry.org | python3 -
+  ```
+- **Anthropic API Key** - [Get one here](https://console.anthropic.com/)
+
+### Step-by-Step Setup
+
+#### 1️⃣ Clone the Repository
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/answer-sheet-marker.git
+git clone https://github.com/rajfnu/answer-sheet-marker.git
 cd answer-sheet-marker
+```
 
-# Install dependencies using Poetry
+#### 2️⃣ Backend Setup
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Install dependencies (this may take 2-3 minutes)
 poetry install
 
-# Activate virtual environment
-poetry shell
-
-# Set up environment variables
+# Create environment file
 cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
+
+# Edit .env and add your Anthropic API key
+# You can use nano, vim, or any text editor:
+nano .env
 ```
 
-### Basic Usage
+**Important**: Update `.env` file with your API key:
+```bash
+# Required
+ANTHROPIC_API_KEY=sk-ant-your-actual-key-here
 
-#### 1. Mark a Single Answer Sheet
+# Optional (defaults are fine)
+LLM_PROVIDER=anthropic
+LLM_MODEL=claude-sonnet-4-5-20250929
+API_HOST=0.0.0.0
+API_PORT=8001
+```
+
+#### 3️⃣ Frontend Setup
 
 ```bash
-poetry run answer-marker mark \
-  --guide data/marking_guides/math_test.pdf \
-  --answers data/answer_sheets/student_001.pdf \
-  --output output/
+# Navigate to frontend directory (from project root)
+cd ../frontend
+
+# Install dependencies (this may take 2-3 minutes)
+npm install
 ```
 
-#### 2. Batch Processing
+#### 4️⃣ Start the Application
+
+You'll need **two terminal windows**:
+
+**Terminal 1 - Backend API:**
+```bash
+cd backend
+poetry run uvicorn answer_marker.api.main:app --host 0.0.0.0 --port 8001 --reload
+```
+
+You should see:
+```
+INFO:     Uvicorn running on http://0.0.0.0:8001
+INFO:     Application startup complete.
+```
+
+**Terminal 2 - Frontend UI:**
+```bash
+cd frontend
+npm run dev
+```
+
+You should see:
+```
+  VITE v5.x.x  ready in XXX ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://192.168.x.x:5173/
+```
+
+#### 5️⃣ Access the Application
+
+Open your browser and go to:
+
+- **Frontend UI**: http://localhost:5173
+- **Backend API**: http://localhost:8001
+- **API Documentation**: http://localhost:8001/docs
+
+### 🎯 First Steps
+
+Once the application is running:
+
+1. **Upload an Assessment** (Marking Guide)
+   - Click "Upload Assessment" in the sidebar
+   - Upload your PDF marking guide (e.g., `example/Assessment.pdf`)
+   - Wait for processing (~30-60 seconds)
+   - You'll see all questions extracted with marks
+
+2. **Mark Answer Sheets**
+   - Click "Mark Answers" in the sidebar
+   - Select the assessment you just uploaded
+   - Enter student ID (e.g., "STUDENT001")
+   - Upload student answer sheet PDF
+   - Click "Submit for Marking"
+   - Wait for evaluation (~1-2 minutes)
+
+3. **View Results**
+   - Click "Reports" in the sidebar
+   - View detailed marking breakdown
+   - See scores, grades, and feedback for each question
+
+### 📁 Example Files
+
+The repository includes sample files in `example/`:
 
 ```bash
-poetry run answer-marker mark \
-  --guide data/marking_guides/math_test.pdf \
-  --answers data/answer_sheets/ \
-  --output output/batch_results/
+example/
+├── Assessment.pdf              # Sample marking guide
+├── Student Answer Sheet 1.pdf  # Sample student answers
+├── Student Answer Sheet 2.pdf
+└── Student Answer Sheet 3.pdf
 ```
 
-#### 3. Calibration Mode
+Use these to test the system before creating your own assessments.
+
+### 🔧 Troubleshooting
+
+**Issue**: `poetry: command not found`
+```bash
+# Install Poetry
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Add to PATH (restart terminal after)
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+**Issue**: `Module not found` errors
+```bash
+# Reinstall dependencies
+cd backend
+poetry install --no-cache
+```
+
+**Issue**: Frontend won't start
+```bash
+# Clear cache and reinstall
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**Issue**: API returns 500 errors
+- Check that your `ANTHROPIC_API_KEY` is correct in `backend/.env`
+- Verify you have API credits: https://console.anthropic.com/
+- Check backend logs in terminal for detailed error messages
+
+**Issue**: "Failed to create assessment"
+- Ensure storage directories exist:
+  ```bash
+  cd backend
+  mkdir -p data/storage/marking_guides data/storage/reports data/storage/cache
+  ```
+
+### 🚀 Development Mode
+
+For development with auto-reload:
+
+**Backend** (already uses --reload):
+```bash
+cd backend
+poetry run uvicorn answer_marker.api.main:app --host 0.0.0.0 --port 8001 --reload
+```
+
+**Frontend** (already has HMR):
+```bash
+cd frontend
+npm run dev
+```
+
+Changes to code will automatically reload the servers.
+
+### 🧪 Running Tests
 
 ```bash
-poetry run answer-marker calibrate \
-  --guide data/marking_guides/math_test.pdf \
-  --sample data/samples/sample_answer.pdf \
-  --score 85
+# Backend tests
+cd backend
+poetry run pytest
+
+# With coverage
+poetry run pytest --cov=src/answer_marker --cov-report=html
+
+# Specific test
+poetry run pytest tests/unit/test_orchestrator.py -v
 ```
 
-### Python API Usage
+### 📖 Next Steps
 
-```python
-from pathlib import Path
-from answer_marker.document_processing import DocumentProcessor
-from answer_marker.core.orchestrator import OrchestratorAgent
-from answer_marker.utils.claude_client import claude_client
+After getting the system running:
 
-async def mark_answer_sheet():
-    # Initialize document processor
-    doc_processor = DocumentProcessor(claude_client.get_client())
-    
-    # Process marking guide
-    marking_guide = await doc_processor.process_marking_guide(
-        Path("data/marking_guides/math_test.pdf")
-    )
-    
-    # Process student answer sheet
-    answer_sheet = await doc_processor.process_answer_sheet(
-        Path("data/answer_sheets/student_001.pdf"),
-        [q['id'] for q in marking_guide['questions']]
-    )
-    
-    # Initialize orchestrator with all agents
-    orchestrator = create_orchestrator()
-    
-    # Mark the answer sheet
-    report = await orchestrator.mark_answer_sheet(marking_guide, answer_sheet)
-    
-    # Print results
-    print(f"Student Score: {report['total_marks']}/{report['max_marks']}")
-    print(f"Grade: {report['grade']}")
-    print(f"Percentage: {report['percentage']:.1f}%")
-    
-    return report
+1. **Read the TODO.md** - See planned features and roadmap
+2. **Check docs/** - Additional documentation and guides
+3. **Try the API docs** - http://localhost:8001/docs
+4. **Explore the code** - Start with `backend/src/answer_marker/`
+
+### 🎓 Understanding the System
+
 ```
+┌─────────────────────────────────────────────────────┐
+│  Frontend (React + TypeScript)                      │
+│  http://localhost:5173                              │
+│  - Upload assessments                               │
+│  - Mark answer sheets                               │
+│  - View reports                                     │
+└──────────────────┬──────────────────────────────────┘
+                   │ REST API calls
+                   ▼
+┌─────────────────────────────────────────────────────┐
+│  Backend API (FastAPI + Python)                     │
+│  http://localhost:8001                              │
+│  - Document processing                              │
+│  - Multi-agent marking system                       │
+│  - Persistent storage                               │
+└──────────────────┬──────────────────────────────────┘
+                   │ API calls
+                   ▼
+┌─────────────────────────────────────────────────────┐
+│  Anthropic Claude API                               │
+│  - Question analysis                                │
+│  - Answer evaluation                                │
+│  - Feedback generation                              │
+└─────────────────────────────────────────────────────┘
+```
+
+### 💡 Quick Commands Reference
+
+```bash
+# Start backend
+cd backend && poetry run uvicorn answer_marker.api.main:app --host 0.0.0.0 --port 8001 --reload
+
+# Start frontend
+cd frontend && npm run dev
+
+# Run tests
+cd backend && poetry run pytest
+
+# Check API health
+curl http://localhost:8001/health
+
+# Format code
+cd backend && poetry run black src tests
+
+# Build for production
+cd frontend && npm run build
+```
+
+---
+
+**Need help?** Check the [docs/](docs/) directory or [open an issue](https://github.com/rajfnu/answer-sheet-marker/issues).
 
 ## 📁 Project Structure
 
