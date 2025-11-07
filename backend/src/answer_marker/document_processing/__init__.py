@@ -68,6 +68,16 @@ class DocumentProcessor:
             structured = await self.structure_analyzer.analyze_marking_guide(parsed["text"])
             logger.info(f"Found {len(structured.get('questions', []))} questions")
 
+            # Step 2.5: Normalize question IDs (fix Claude's inconsistent ID assignment)
+            for i, question in enumerate(structured.get('questions', []), 1):
+                expected_id = f"Q{i}"
+                if question.get('id') != expected_id:
+                    logger.debug(f"Normalizing question ID from '{question.get('id')}' to '{expected_id}'")
+                    question['id'] = expected_id
+                # Ensure question_number is also set correctly
+                if not question.get('question_number'):
+                    question['question_number'] = str(i)
+
             # Step 3: Validate structure
             validation = self.validator.validate_marking_guide(structured)
 

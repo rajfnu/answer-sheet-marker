@@ -18,8 +18,8 @@ const navItems = [
   {
     to: '/upload-assessment',
     icon: Upload,
-    label: 'Upload Assessment',
-    description: 'Upload marking guide',
+    label: 'Create Assessment',
+    description: 'Create new assessment',
   },
   {
     to: '/mark-answers',

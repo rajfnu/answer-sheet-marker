@@ -216,12 +216,28 @@ class AnswerEvaluatorAgent(BaseAgent):
         }
 
         # Build prompt with question and rubric
+        question_type = question.get('question_type', 'unknown')
+
+        # Format options for MCQ/true_false questions
+        options_text = ""
+        if question_type in ['mcq', 'true_false'] and question.get('options'):
+            options_list = []
+            correct_answer = question.get('correct_answer', '')
+            for opt in question.get('options', []):
+                label = opt.get('label', '')
+                text = opt.get('text', '')
+                is_correct = opt.get('is_correct', False) or (label == correct_answer)
+                correct_marker = " ✓ CORRECT ANSWER" if is_correct else ""
+                options_list.append(f"  {label}. {text}{correct_marker}")
+            options_text = f"\n\nOptions:\n" + "\n".join(options_list)
+
         prompt = f"""<question>
 {question.get('question_text', '')}
+{options_text}
 </question>
 
 <marking_rubric>
-Question Type: {question.get('question_type', 'unknown')}
+Question Type: {question_type}
 Maximum Marks: {question.get('max_marks', 0)}
 
 Key Concepts to Look For:
@@ -242,6 +258,17 @@ Keywords: {', '.join(question.get('keywords', []))}
 
 <instructions>
 Evaluate this answer carefully:
+
+{'FOR MCQ/TRUE_FALSE QUESTIONS:' if question_type in ['mcq', 'true_false'] else ''}
+{'- The student may answer with just the letter (e.g., "B") or with the letter and full option text (e.g., "B - Financial accounting...")' if question_type in ['mcq', 'true_false'] else ''}
+{'- BOTH formats are correct if the letter matches the correct answer' if question_type in ['mcq', 'true_false'] else ''}
+{'- Award FULL marks if the student selected the correct option' if question_type in ['mcq', 'true_false'] else ''}
+{'- Award ZERO marks if the student selected an incorrect option' if question_type in ['mcq', 'true_false'] else ''}
+{'- Be flexible with formatting - ignore question numbers, bold text, or extra punctuation' if question_type in ['mcq', 'true_false'] else ''}
+{'- The student answer may contain prefixes like "Q1:", "**Q1:**", "Question 1:", etc. - ignore these' if question_type in ['mcq', 'true_false'] else ''}
+{'- Focus on extracting the actual answer choice from the student response' if question_type in ['mcq', 'true_false'] else ''}
+
+FOR ALL QUESTIONS:
 1. Check for each key concept in the rubric
 2. Assess accuracy of concepts present
 3. Identify strengths and weaknesses
@@ -283,6 +310,7 @@ Use the submit_evaluation tool to provide your structured evaluation.
                 # Build AnswerEvaluation with optional fields
                 eval_kwargs = {
                     "question_id": question.get("id", ""),
+                    "question_number": question.get("question_number"),  # Preserve question number
                     "concepts_identified": concepts_identified,
                     "overall_quality": evaluation_data.get("overall_quality", "satisfactory"),
                     "confidence_score": evaluation_data.get("confidence_score", 0.0),

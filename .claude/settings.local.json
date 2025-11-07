@@ -4,7 +4,8 @@
       "Bash(poetry run pytest:*)",
       "Bash(python -m answer_marker.cli.commands:*)",
       "Bash(poetry run answer-marker:*)",
-      "Bash(poetry install:*)"
+      "Bash(poetry install:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

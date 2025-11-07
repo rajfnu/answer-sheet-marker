@@ -77,6 +77,7 @@ class AnalyzedQuestion(BaseModel):
     """
 
     id: str = Field(..., description="Unique question identifier")
+    question_number: str = Field(..., description="Question number (e.g., '1', '2', '3')")
     question_text: str = Field(..., description="The question text")
     question_type: QuestionType
     max_marks: float = Field(..., ge=0, description="Maximum marks for this question")

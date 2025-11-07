@@ -141,7 +141,14 @@ class StructureAnalyzer:
                         "items": {
                             "type": "object",
                             "properties": {
-                                "id": {"type": "string"},
+                                "id": {
+                                    "type": "string",
+                                    "description": "Unique question ID in format 'Q1', 'Q2', etc.",
+                                },
+                                "question_number": {
+                                    "type": "string",
+                                    "description": "The actual question number from the document (e.g., '1', '2', '3')",
+                                },
                                 "question_text": {"type": "string"},
                                 "marks": {"type": "number"},
                                 "marking_scheme": {"type": "string"},
@@ -156,8 +163,25 @@ class StructureAnalyzer:
                                         "true_false",
                                     ],
                                 },
+                                "options": {
+                                    "type": "array",
+                                    "description": "For MCQ/true_false questions: list of options with their labels and text",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "label": {"type": "string", "description": "Option label (e.g., 'A', 'B', 'C', 'D', 'True', 'False')"},
+                                            "text": {"type": "string", "description": "Option text/description"},
+                                            "is_correct": {"type": "boolean", "description": "Whether this is the correct answer"}
+                                        },
+                                        "required": ["label", "text"]
+                                    }
+                                },
+                                "correct_answer": {
+                                    "type": "string",
+                                    "description": "For MCQ/true_false: the correct answer label (e.g., 'B', 'True')"
+                                },
                             },
-                            "required": ["id", "question_text", "marks"],
+                            "required": ["id", "question_number", "question_text", "marks"],
                         },
                     },
                     "total_marks": {"type": "number"},
@@ -195,11 +219,18 @@ Use the submit_structure tool to provide the structured output.
 </task>
 
 <guidelines>
-- Be thorough - extract all questions completely
+- Be thorough - extract ALL questions completely (don't skip any questions)
 - Preserve the exact wording of questions and marking schemes
 - Identify implicit marking schemes from sample answers
 - Handle multi-part questions appropriately
 - Extract all numerical marks accurately
+- IMPORTANT: Assign unique IDs to each question (Q1, Q2, Q3, etc.)
+- IMPORTANT: Extract and preserve the actual question number from the document
+- DO NOT duplicate questions - each question should appear only once
+- Use the question numbering from the source document, not your own numbering
+- For MCQ and true/false questions: Extract ALL options with their labels (A, B, C, D, etc.) and text
+- For MCQ and true/false questions: Identify which option is correct and include it in "correct_answer" field
+- For MCQ questions: mark the correct option with is_correct: true in the options array
 </guidelines>"""
 
         logger.debug("Calling Claude for structure analysis")

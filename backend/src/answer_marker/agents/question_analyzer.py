@@ -262,9 +262,13 @@ and create clear evaluation criteria for different quality levels."""
                     **analysis_data.get("evaluation_criteria", {})
                 )
 
+                # Extract question number from question dict (or derive from id)
+                question_num = question.get("question_number") or question.get("question_num") or "1"
+
                 # Build AnalyzedQuestion
                 analyzed_question = AnalyzedQuestion(
                     id=analysis_data.get("id", question.get("id", "")),
+                    question_number=str(question_num),  # Preserve the question number!
                     question_text=analysis_data.get(
                         "question_text", question.get("question_text", "")
                     ),

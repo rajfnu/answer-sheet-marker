@@ -15,7 +15,7 @@ export default function Header() {
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              Powered by Claude Sonnet 4.5
+              Powered by DataInsightAI
             </span>
           </div>
         </div>

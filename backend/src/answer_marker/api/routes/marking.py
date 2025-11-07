@@ -17,6 +17,9 @@ from ..models.responses import (
     MarkingGuideResponse,
     MarkingReportResponse,
     QuestionSummary,
+    QuestionDetailResponse,
+    KeyConceptResponse,
+    EvaluationCriteriaResponse,
     ScoreSummary,
     QuestionEvaluationResponse,
 )
@@ -31,11 +34,15 @@ router = APIRouter(prefix="/api/v1", tags=["Marking"])
     "/marking-guides/upload",
     response_model=MarkingGuideResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Upload Marking Guide",
-    description="Upload a marking guide PDF for processing and analysis",
+    summary="Create Assessment",
+    description="Create a new assessment with marking guide PDF and metadata",
 )
 async def upload_marking_guide(
+    title: str = Form(..., description="Assessment name/title"),
     file: UploadFile = File(..., description="Marking guide PDF file"),
+    description: str = Form(None, description="Assessment description"),
+    subject: str = Form(None, description="Subject/course name"),
+    grade: str = Form(None, description="Grade level"),
 ) -> MarkingGuideResponse:
     """Upload and process a marking guide.
 
@@ -62,20 +69,45 @@ async def upload_marking_guide(
 
         # Process marking guide (with caching!)
         guide_id, marking_guide, cached = await marking_service.upload_marking_guide(
-            file_path, file.filename
+            file_path=file_path,
+            filename=file.filename,
+            title=title,
+            description=description,
+            subject=subject,
+            grade=grade,
         )
 
         if cached:
             logger.info(f"⚡ Returned cached guide {guide_id} - 0 API calls!")
 
-        # Build response
-        question_summaries = [
-            QuestionSummary(
+        # Build response with full question details
+        question_details = [
+            QuestionDetailResponse(
                 question_id=q.id,
-                question_number=q.id,  # Use id as question_number
+                question_number=q.question_number,  # Use actual question number
+                question_text=q.question_text,
+                question_type=q.question_type.value if hasattr(q.question_type, 'value') else str(q.question_type),
                 max_marks=q.max_marks,
-                question_type=q.question_type,
-                has_rubric=bool(q.evaluation_criteria),
+                key_concepts=[
+                    KeyConceptResponse(
+                        concept=kc.concept,
+                        points=kc.points,
+                        mandatory=kc.mandatory,
+                        keywords=kc.keywords,
+                        description=kc.description,
+                    )
+                    for kc in q.key_concepts
+                ],
+                evaluation_criteria=EvaluationCriteriaResponse(
+                    excellent=q.evaluation_criteria.excellent,
+                    good=q.evaluation_criteria.good,
+                    satisfactory=q.evaluation_criteria.satisfactory,
+                    poor=q.evaluation_criteria.poor,
+                ),
+                keywords=q.keywords,
+                common_mistakes=q.common_mistakes,
+                sample_answer=q.sample_answer,
+                instructions=q.instructions,
             )
             for q in marking_guide.questions
         ]
@@ -83,9 +115,12 @@ async def upload_marking_guide(
         return MarkingGuideResponse(
             guide_id=guide_id,
             title=marking_guide.title,
+            description=getattr(marking_guide, 'description', None),
+            subject=getattr(marking_guide, 'subject', None),
+            grade=getattr(marking_guide, 'grade', None),
             total_marks=marking_guide.total_marks,
             num_questions=len(marking_guide.questions),
-            questions=question_summaries,
+            questions=question_details,
             analyzed=True,
             created_at=datetime.now(),
         )
@@ -141,13 +176,34 @@ async def get_marking_guide(guide_id: str) -> MarkingGuideResponse:
     try:
         marking_guide = await marking_service.get_marking_guide(guide_id)
 
-        question_summaries = [
-            QuestionSummary(
+        # Build response with full question details
+        question_details = [
+            QuestionDetailResponse(
                 question_id=q.id,
-                question_number=q.id,  # Use id as question_number
+                question_number=q.question_number,  # Use actual question number
+                question_text=q.question_text,
+                question_type=q.question_type.value if hasattr(q.question_type, 'value') else str(q.question_type),
                 max_marks=q.max_marks,
-                question_type=q.question_type,
-                has_rubric=bool(q.evaluation_criteria),
+                key_concepts=[
+                    KeyConceptResponse(
+                        concept=kc.concept,
+                        points=kc.points,
+                        mandatory=kc.mandatory,
+                        keywords=kc.keywords,
+                        description=kc.description,
+                    )
+                    for kc in q.key_concepts
+                ],
+                evaluation_criteria=EvaluationCriteriaResponse(
+                    excellent=q.evaluation_criteria.excellent,
+                    good=q.evaluation_criteria.good,
+                    satisfactory=q.evaluation_criteria.satisfactory,
+                    poor=q.evaluation_criteria.poor,
+                ),
+                keywords=q.keywords,
+                common_mistakes=q.common_mistakes,
+                sample_answer=q.sample_answer,
+                instructions=q.instructions,
             )
             for q in marking_guide.questions
         ]
@@ -155,9 +211,12 @@ async def get_marking_guide(guide_id: str) -> MarkingGuideResponse:
         return MarkingGuideResponse(
             guide_id=guide_id,
             title=marking_guide.title,
+            description=getattr(marking_guide, 'description', None),
+            subject=getattr(marking_guide, 'subject', None),
+            grade=getattr(marking_guide, 'grade', None),
             total_marks=marking_guide.total_marks,
             num_questions=len(marking_guide.questions),
-            questions=question_summaries,
+            questions=question_details,
             analyzed=True,
             created_at=datetime.now(),
         )
@@ -216,6 +275,7 @@ async def mark_answer_sheet(
         question_evaluations = [
             QuestionEvaluationResponse(
                 question_id=qe.question_id,
+                question_number=qe.question_number,  # Preserve question number for display
                 marks_awarded=qe.marks_awarded,
                 max_marks=qe.max_marks,
                 percentage=qe.percentage,
@@ -290,6 +350,7 @@ async def get_report(report_id: str) -> MarkingReportResponse:
         question_evaluations = [
             QuestionEvaluationResponse(
                 question_id=qe.question_id,
+                question_number=qe.question_number,  # Preserve question number for display
                 marks_awarded=qe.marks_awarded,
                 max_marks=qe.max_marks,
                 percentage=qe.percentage,

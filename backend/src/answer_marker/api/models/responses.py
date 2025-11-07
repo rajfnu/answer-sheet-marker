@@ -68,14 +68,82 @@ class QuestionSummary(BaseModel):
     has_rubric: bool
 
 
+class KeyConceptResponse(BaseModel):
+    """Key concept for evaluation."""
+
+    concept: str = Field(..., description="The concept to look for")
+    points: float = Field(..., description="Points allocated to this concept")
+    mandatory: bool = Field(default=False, description="Whether this concept is required")
+    keywords: List[str] = Field(default_factory=list, description="Keywords associated with this concept")
+    description: Optional[str] = Field(None, description="Detailed description of the concept")
+
+
+class EvaluationCriteriaResponse(BaseModel):
+    """Criteria for different performance levels."""
+
+    excellent: str = Field(..., description="Criteria for excellent performance")
+    good: str = Field(..., description="Criteria for good performance")
+    satisfactory: str = Field(..., description="Criteria for satisfactory performance")
+    poor: str = Field(..., description="Criteria for poor performance")
+
+
+class QuestionDetailResponse(BaseModel):
+    """Detailed question information including text and rubric."""
+
+    question_id: str = Field(..., description="Question identifier")
+    question_number: str = Field(..., description="Question number")
+    question_text: str = Field(..., description="The full question text")
+    question_type: str = Field(..., description="Type of question")
+    max_marks: float = Field(..., description="Maximum marks for this question")
+    key_concepts: List[KeyConceptResponse] = Field(..., description="Key concepts to evaluate")
+    evaluation_criteria: EvaluationCriteriaResponse = Field(..., description="Evaluation criteria")
+    keywords: List[str] = Field(default_factory=list, description="Important keywords")
+    common_mistakes: List[str] = Field(default_factory=list, description="Common mistakes to watch for")
+    sample_answer: Optional[str] = Field(None, description="Sample correct answer")
+    instructions: Optional[str] = Field(None, description="Special instructions for marking")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "question_id": "Q1",
+                "question_number": "1",
+                "question_text": "Explain Newton's First Law of Motion",
+                "question_type": "short_answer",
+                "max_marks": 5.0,
+                "key_concepts": [
+                    {
+                        "concept": "Inertia",
+                        "points": 2.0,
+                        "mandatory": True,
+                        "keywords": ["inertia", "rest", "motion"],
+                        "description": "Must mention the concept of inertia"
+                    }
+                ],
+                "evaluation_criteria": {
+                    "excellent": "All concepts clearly explained with examples",
+                    "good": "Most concepts present with minor gaps",
+                    "satisfactory": "Basic concepts present but incomplete",
+                    "poor": "Missing most key concepts"
+                },
+                "keywords": ["inertia", "force", "motion"],
+                "common_mistakes": ["Confusing with Newton's Second Law"],
+                "sample_answer": "An object at rest stays at rest...",
+                "instructions": "Look for clear explanation of inertia"
+            }
+        }
+
+
 class MarkingGuideResponse(BaseModel):
     """Marking guide response."""
 
     guide_id: str = Field(..., description="Marking guide ID")
-    title: str = Field(..., description="Assessment title")
+    title: str = Field(..., description="Assessment title/name")
+    description: Optional[str] = Field(None, description="Assessment description")
+    subject: Optional[str] = Field(None, description="Subject/course")
+    grade: Optional[str] = Field(None, description="Grade level")
     total_marks: float = Field(..., description="Total marks available")
     num_questions: int = Field(..., description="Number of questions")
-    questions: List[QuestionSummary] = Field(..., description="Question summaries")
+    questions: List[QuestionDetailResponse] = Field(..., description="Detailed question information")
     analyzed: bool = Field(default=False, description="Whether questions are analyzed")
     created_at: datetime = Field(default_factory=datetime.now, description="Creation timestamp")
 
@@ -131,6 +199,7 @@ class QuestionEvaluationResponse(BaseModel):
     """Question-level evaluation details."""
 
     question_id: str = Field(..., description="Question identifier")
+    question_number: Optional[str] = Field(None, description="Question number for display (e.g., '1', '2', '3')")
     marks_awarded: float = Field(..., description="Marks awarded for this question")
     max_marks: float = Field(..., description="Maximum marks for this question")
     percentage: float = Field(..., description="Percentage score for this question")

@@ -4,8 +4,8 @@ import { Upload, FileCheck, BarChart3, Zap, FolderOpen } from 'lucide-react';
 const features = [
   {
     icon: Upload,
-    title: 'Upload Assessment',
-    description: 'Upload your marking guide and assessment criteria in PDF format',
+    title: 'Create Assessment',
+    description: 'Set up a new assessment with marking guide and metadata',
     to: '/upload-assessment',
     color: 'text-blue-500',
   },
@@ -41,12 +41,12 @@ export default function Home() {
           AI-Powered Answer Sheet Marking
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Automate your grading process with Claude Sonnet 4.5. Fast, accurate, and consistent
+          Automate your grading process with DataInsightAI. Fast, accurate, and consistent
           assessment marking for educators.
         </p>
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-6">
           <Zap className="h-4 w-4 text-yellow-500" />
-          <span>Powered by Anthropic's Claude Sonnet 4.5</span>
+          <span>Powered by DataInsightAI</span>
         </div>
       </div>
 

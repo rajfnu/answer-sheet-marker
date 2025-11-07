@@ -1,27 +1,28 @@
 import apiClient from '../api';
+import type { MarkingGuideResponse } from '../../types';
 
-// Temporary inline type definition to match backend response schema
-interface QuestionSummary {
-  question_id: string;
-  question_number: string;
-  max_marks: number;
-  question_type: string;
-  has_rubric: boolean;
-}
-
-interface MarkingGuideResponse {
-  guide_id: string;
-  title: string;
-  total_marks: number;
-  num_questions: number;
-  questions: QuestionSummary[];
-  analyzed: boolean;
-  created_at: string;
-}
-
-export async function uploadMarkingGuide(file: File): Promise<MarkingGuideResponse> {
+export async function uploadMarkingGuide(
+  file: File,
+  title: string,
+  description?: string,
+  subject?: string,
+  grade?: string
+): Promise<MarkingGuideResponse> {
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('title', title);
+
+  if (description) {
+    formData.append('description', description);
+  }
+
+  if (subject) {
+    formData.append('subject', subject);
+  }
+
+  if (grade) {
+    formData.append('grade', grade);
+  }
 
   const response = await apiClient.post<MarkingGuideResponse>(
     '/api/v1/marking-guides/upload',

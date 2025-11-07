@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import Button from '../components/ui/Button';
 import { getMarkingGuide } from '../lib/api/markingGuides';
 import { getReportsByAssessment, type MarkingReportResponse } from '../lib/api/reports';
+import type { MarkingGuideResponse } from '../types';
 import {
   FileText,
   Calendar,
@@ -15,27 +16,14 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  User
+  User,
+  ChevronDown,
+  ChevronUp,
+  BookOpen,
+  ListChecks,
+  AlertTriangle,
+  Lightbulb
 } from 'lucide-react';
-
-// Temporary inline type definition to match backend response schema
-interface QuestionSummary {
-  question_id: string;
-  question_number: string;
-  max_marks: number;
-  question_type: string;
-  has_rubric: boolean;
-}
-
-interface MarkingGuideResponse {
-  guide_id: string;
-  title: string;
-  total_marks: number;
-  num_questions: number;
-  questions: QuestionSummary[];
-  analyzed: boolean;
-  created_at: string;
-}
 
 type LoadingState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -47,6 +35,7 @@ export default function AssessmentDetail() {
   const [reports, setReports] = useState<MarkingReportResponse[]>([]);
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -202,7 +191,14 @@ export default function AssessmentDetail() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card
+          className={reports.length > 0 ? "cursor-pointer hover:border-primary transition-all" : ""}
+          onClick={() => {
+            if (reports.length > 0) {
+              document.getElementById('student-reports')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <User className="h-8 w-8 text-primary" />
@@ -228,33 +224,176 @@ export default function AssessmentDetail() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {assessment.questions.map((question, idx) => (
-              <div
-                key={idx}
-                className="p-3 rounded border border-border bg-card flex justify-between items-center hover:border-primary transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="font-medium text-foreground">
-                    Question {question.question_number}
-                  </span>
-                  <span className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground">
-                    {question.question_type}
-                  </span>
-                  {question.has_rubric && (
-                    <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-700">
-                      Has Rubric
-                    </span>
+            {assessment.questions.map((question, idx) => {
+              const isExpanded = expandedQuestionId === question.question_id;
+
+              return (
+                <div
+                  key={idx}
+                  className="rounded border border-border bg-card transition-all"
+                >
+                  {/* Question Header - Clickable */}
+                  <div
+                    className="p-3 flex justify-between items-center hover:border-primary hover:bg-accent cursor-pointer transition-colors"
+                    onClick={() => setExpandedQuestionId(isExpanded ? null : question.question_id)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium text-foreground">
+                        Question {question.question_number}
+                      </span>
+                      <span className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground">
+                        {question.question_type}
+                      </span>
+                      <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">
+                        {question.key_concepts.length} concepts
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium text-primary">{question.max_marks} marks</span>
+                      {isExpanded ? (
+                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Expanded Content */}
+                  {isExpanded && (
+                    <div className="p-4 border-t border-border bg-muted/30 space-y-4">
+                      {/* Question Text */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <BookOpen className="h-4 w-4 text-primary" />
+                          <h4 className="font-semibold text-foreground">Question</h4>
+                        </div>
+                        <p className="text-sm text-foreground bg-background p-3 rounded border border-border">
+                          {question.question_text}
+                        </p>
+                      </div>
+
+                      {/* Key Concepts */}
+                      {question.key_concepts.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <ListChecks className="h-4 w-4 text-primary" />
+                            <h4 className="font-semibold text-foreground">Key Concepts & Marking Criteria</h4>
+                          </div>
+                          <div className="space-y-2">
+                            {question.key_concepts.map((concept, conceptIdx) => (
+                              <div
+                                key={conceptIdx}
+                                className="bg-background p-3 rounded border border-border"
+                              >
+                                <div className="flex justify-between items-start mb-1">
+                                  <span className="font-medium text-foreground">{concept.concept}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-primary">{concept.points} pts</span>
+                                    {concept.mandatory && (
+                                      <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700">
+                                        Required
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {concept.description && (
+                                  <p className="text-xs text-muted-foreground mt-1">{concept.description}</p>
+                                )}
+                                {concept.keywords.length > 0 && (
+                                  <div className="flex gap-1 mt-2 flex-wrap">
+                                    {concept.keywords.map((keyword, kwIdx) => (
+                                      <span
+                                        key={kwIdx}
+                                        className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700"
+                                      >
+                                        {keyword}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Evaluation Criteria */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Award className="h-4 w-4 text-primary" />
+                          <h4 className="font-semibold text-foreground">Evaluation Criteria</h4>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          <div className="bg-green-50 border border-green-200 p-2 rounded">
+                            <p className="text-xs font-semibold text-green-900 mb-1">Excellent</p>
+                            <p className="text-xs text-green-700">{question.evaluation_criteria.excellent}</p>
+                          </div>
+                          <div className="bg-blue-50 border border-blue-200 p-2 rounded">
+                            <p className="text-xs font-semibold text-blue-900 mb-1">Good</p>
+                            <p className="text-xs text-blue-700">{question.evaluation_criteria.good}</p>
+                          </div>
+                          <div className="bg-yellow-50 border border-yellow-200 p-2 rounded">
+                            <p className="text-xs font-semibold text-yellow-900 mb-1">Satisfactory</p>
+                            <p className="text-xs text-yellow-700">{question.evaluation_criteria.satisfactory}</p>
+                          </div>
+                          <div className="bg-red-50 border border-red-200 p-2 rounded">
+                            <p className="text-xs font-semibold text-red-900 mb-1">Poor</p>
+                            <p className="text-xs text-red-700">{question.evaluation_criteria.poor}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Common Mistakes */}
+                      {question.common_mistakes.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <AlertTriangle className="h-4 w-4 text-orange-500" />
+                            <h4 className="font-semibold text-foreground">Common Mistakes to Watch For</h4>
+                          </div>
+                          <ul className="space-y-1">
+                            {question.common_mistakes.map((mistake, mistakeIdx) => (
+                              <li key={mistakeIdx} className="text-sm text-orange-700 flex items-start gap-2">
+                                <span className="text-orange-500 mt-0.5">•</span>
+                                {mistake}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Sample Answer */}
+                      {question.sample_answer && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Lightbulb className="h-4 w-4 text-yellow-500" />
+                            <h4 className="font-semibold text-foreground">Sample Answer</h4>
+                          </div>
+                          <p className="text-sm text-foreground bg-background p-3 rounded border border-border italic">
+                            {question.sample_answer}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Instructions */}
+                      {question.instructions && (
+                        <div className="bg-blue-50 border border-blue-200 p-3 rounded">
+                          <p className="text-sm text-blue-900">
+                            <span className="font-semibold">Marking Instructions: </span>
+                            {question.instructions}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-                <span className="font-medium text-primary">{question.max_marks} marks</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
       {/* Student Reports */}
-      <Card>
+      <Card id="student-reports">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />

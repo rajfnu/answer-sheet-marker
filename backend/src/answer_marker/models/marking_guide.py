@@ -16,8 +16,10 @@ class MarkingGuide(BaseModel):
     all questions, evaluation criteria, and assessment metadata.
     """
 
-    title: str = Field(..., description="Assessment title")
+    title: str = Field(..., description="Assessment title/name")
+    description: Optional[str] = Field(None, description="Assessment description")
     subject: Optional[str] = Field(None, description="Subject/course")
+    grade: Optional[str] = Field(None, description="Grade level (e.g., 'Grade 10', 'Year 12')")
     date: Optional[datetime] = Field(None, description="Assessment date")
     total_marks: float = Field(..., ge=0, description="Total marks available")
     questions: List[AnalyzedQuestion] = Field(..., description="List of questions")

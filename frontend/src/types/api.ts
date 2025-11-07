@@ -1,16 +1,52 @@
-export interface MarkingGuideResponse {
-  id: string;
-  filename: string;
-  upload_time: string;
-  total_questions: number;
-  total_marks: number;
-  questions: QuestionSummary[];
+export interface KeyConcept {
+  concept: string;
+  points: number;
+  mandatory: boolean;
+  keywords: string[];
+  description?: string;
 }
 
-export interface QuestionSummary {
-  question_number: number;
+export interface EvaluationCriteria {
+  excellent: string;
+  good: string;
+  satisfactory: string;
+  poor: string;
+}
+
+export interface QuestionDetail {
+  question_id: string;
+  question_number: string;
+  question_text: string;
+  question_type: string;
   max_marks: number;
-  marking_criteria: string;
+  key_concepts: KeyConcept[];
+  evaluation_criteria: EvaluationCriteria;
+  keywords: string[];
+  common_mistakes: string[];
+  sample_answer?: string;
+  instructions?: string;
+}
+
+// Legacy QuestionSummary - kept for backward compatibility
+export interface QuestionSummary {
+  question_id: string;
+  question_number: string;
+  max_marks: number;
+  question_type: string;
+  has_rubric: boolean;
+}
+
+export interface MarkingGuideResponse {
+  guide_id: string;
+  title: string;
+  description?: string;
+  subject?: string;
+  grade?: string;
+  total_marks: number;
+  num_questions: number;
+  questions: QuestionDetail[];
+  analyzed: boolean;
+  created_at: string;
 }
 
 export interface MarkingReportResponse {

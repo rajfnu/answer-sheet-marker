@@ -1,0 +1,42 @@
+{
+  "file_hashes": {
+    "dfa4fea0ffd8106a9dcbea11ece57b2021c9da45e1dca59b3d93d4d0168ce7c4": "guide_28d7aea9"
+  },
+  "guides": {
+    "guide_28d7aea9": {
+      "title": "Financial Accounting Assessment",
+      "file_hash": "dfa4fea0ffd8106a9dcbea11ece57b2021c9da45e1dca59b3d93d4d0168ce7c4",
+      "created_at": "2025-11-07T16:10:45.032808",
+      "total_marks": 50.0,
+      "num_questions": 10
+    }
+  },
+  "reports": {
+    "report_bb913a77": {
+      "student_id": "Student_1",
+      "marking_guide_id": "guide_28d7aea9",
+      "assessment_title": "Financial Accounting Assessment",
+      "created_at": "2025-11-07T16:16:47.404233",
+      "total_marks": 35.5,
+      "max_marks": 50.0,
+      "percentage": 71.0,
+      "grade": "B",
+      "passed": true
+    },
+    "report_ef9d0959": {
+      "student_id": "1234",
+      "marking_guide_id": "guide_cb225de2",
+      "assessment_title": "Finacial",
+      "created_at": "2025-11-07T19:40:12.382518",
+      "total_marks": 44.0,
+      "max_marks": 50.0,
+      "percentage": 88.0,
+      "grade": "A",
+      "passed": true
+    }
+  },
+  "answer_sheet_hashes": {
+    "guide_28d7aea9:Student_1:6902d112aff16d93d7320d3c1330d9c0b2b54ceb16336c2980ff6ddf3187693e": "report_bb913a77",
+    "guide_cb225de2:1234:6902d112aff16d93d7320d3c1330d9c0b2b54ceb16336c2980ff6ddf3187693e": "report_ef9d0959"
+  }
+}

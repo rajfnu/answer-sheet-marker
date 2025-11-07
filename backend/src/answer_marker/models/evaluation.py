@@ -32,6 +32,7 @@ class AnswerEvaluation(BaseModel):
     """
 
     question_id: str
+    question_number: Optional[str] = Field(None, description="Question number for display (e.g., '1', '2', '3')")
     student_id: Optional[str] = None
     concepts_identified: List[ConceptEvaluation] = Field(..., description="Concept evaluations")
     overall_quality: Literal["excellent", "good", "satisfactory", "poor", "inadequate"]

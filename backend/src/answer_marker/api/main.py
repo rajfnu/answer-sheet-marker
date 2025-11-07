@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 
 from .config import api_settings
+from .logging_config import setup_logging
 from .exceptions import (
     APIError,
     api_error_handler,
@@ -18,6 +19,9 @@ from .exceptions import (
     validation_exception_handler,
 )
 from .routes import health, marking
+
+# Setup logging first thing
+setup_logging()
 
 
 def create_app() -> FastAPI:

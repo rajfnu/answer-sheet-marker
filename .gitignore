@@ -110,3 +110,19 @@ MANIFEST
 .AppleDouble
 .LSOverride
 example/reports/
+# Log files
+backend/logs/*
+frontend/logs/*
+!backend/logs/.gitkeep
+!frontend/logs/.gitkeep
+*.log
+
+# PID files
+*.pid
+
+# Runtime duplicates
+backend/backend/
+
+# Temporary Office files
+~$*.docx
+~$*.xlsx

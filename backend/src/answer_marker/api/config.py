@@ -61,6 +61,15 @@ class APISettings(BaseSettings):
     include_token_usage: bool = True
     include_processing_time: bool = True
 
+    # Logging Configuration
+    log_dir: str = "./logs"
+    log_level: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+    log_rotation: str = "100 MB"  # Rotate when file reaches this size
+    log_retention: str = "30 days"  # Keep logs for this duration
+    log_format: str = "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}"
+    log_to_console: bool = True
+    log_to_file: bool = True
+
     class Config:
         env_prefix = "API_"
         env_file = ".env"

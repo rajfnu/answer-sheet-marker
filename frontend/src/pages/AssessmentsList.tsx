@@ -4,25 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import Button from '../components/ui/Button';
 import { getAllMarkingGuidesWithDetails } from '../lib/api/markingGuides';
 import { FileText, Calendar, Hash, Award, Upload, AlertCircle, Tag } from 'lucide-react';
-
-// Temporary inline type definition to match backend response schema
-interface QuestionSummary {
-  question_id: string;
-  question_number: string;
-  max_marks: number;
-  question_type: string;
-  has_rubric: boolean;
-}
-
-interface MarkingGuideResponse {
-  guide_id: string;
-  title: string;
-  total_marks: number;
-  num_questions: number;
-  questions: QuestionSummary[];
-  analyzed: boolean;
-  created_at: string;
-}
+import type { MarkingGuideResponse } from '../types';
 
 type LoadingState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -79,7 +61,7 @@ export default function AssessmentsList() {
         </div>
         <Button onClick={() => navigate('/upload-assessment')} size="lg">
           <Upload className="h-4 w-4 mr-2" />
-          Upload New Assessment
+          Create New Assessment
         </Button>
       </div>
 
@@ -121,7 +103,7 @@ export default function AssessmentsList() {
             </p>
             <Button onClick={() => navigate('/upload-assessment')}>
               <Upload className="h-4 w-4 mr-2" />
-              Upload Assessment
+              Create Assessment
             </Button>
           </CardContent>
         </Card>
