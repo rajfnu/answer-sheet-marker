@@ -92,9 +92,9 @@ class OrchestratorAgent(BaseAgent):
         )
 
         try:
-            # Step 1: Analyze all questions in marking guide
-            logger.info(f"[{self.config.name}] Step 1/5: Analyzing questions...")
-            analyzed_questions = await self._analyze_questions(marking_guide)
+            # Note: marking_guide.questions are ALREADY AnalyzedQuestion objects with correct IDs
+            # No need to re-analyze them - that causes ID mismatches!
+            logger.info(f"[{self.config.name}] Step 1/2: Using {len(marking_guide.questions)} pre-analyzed questions from marking guide...")
 
             # Step 2: Evaluate each answer
             logger.info(f"[{self.config.name}] Step 2/5: Evaluating answers...")
@@ -102,8 +102,10 @@ class OrchestratorAgent(BaseAgent):
             for question in marking_guide.questions:
                 student_answer = answer_sheet.get_answer(question.id)
                 if student_answer:
+                    # Convert AnalyzedQuestion to dict for evaluator
+                    question_dict = question.model_dump()
                     evaluation = await self._evaluate_answer(
-                        question=analyzed_questions[question.id], student_answer=student_answer
+                        question=question_dict, student_answer=student_answer
                     )
                     evaluations.append(evaluation)
                 else:

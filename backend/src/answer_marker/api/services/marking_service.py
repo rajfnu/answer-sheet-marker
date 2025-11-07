@@ -94,13 +94,24 @@ class MarkingService:
         logger.info("Marking service initialized successfully")
 
     async def upload_marking_guide(
-        self, file_path: Path, filename: str, job_id: Optional[str] = None
+        self,
+        file_path: Path,
+        filename: str,
+        title: str,
+        description: Optional[str] = None,
+        subject: Optional[str] = None,
+        grade: Optional[str] = None,
+        job_id: Optional[str] = None,
     ) -> tuple[str, MarkingGuide, bool]:
         """Process and store an uploaded marking guide.
 
         Args:
             file_path: Path to the uploaded file
             filename: Original filename
+            title: Assessment title/name
+            description: Assessment description
+            subject: Subject/course name
+            grade: Grade level
             job_id: Optional job ID for progress tracking
 
         Returns:
@@ -143,6 +154,14 @@ class MarkingService:
                     )
 
                 analyzed_q = await self.agents["question_analyzer"]._analyze_single_question(q)
+
+                # Fix: Ensure consistent ID format (Q1, Q2, Q3, etc.)
+                expected_id = f"Q{i}"
+                if analyzed_q.id != expected_id:
+                    logger.debug(f"Correcting question ID from '{analyzed_q.id}' to '{expected_id}'")
+                    # Create new AnalyzedQuestion with corrected ID
+                    analyzed_q = analyzed_q.model_copy(update={"id": expected_id})
+
                 analyzed_questions.append(analyzed_q)
 
                 # Record token usage (if available from Claude response)
@@ -152,7 +171,10 @@ class MarkingService:
             # Create MarkingGuide
             guide_id = f"guide_{uuid.uuid4().hex[:8]}"
             marking_guide = MarkingGuide(
-                title=marking_guide_data.get("title", filename),
+                title=title,
+                description=description,
+                subject=subject,
+                grade=grade,
                 total_marks=sum(q.max_marks for q in analyzed_questions),
                 questions=analyzed_questions,
                 source_file=str(file_path),
