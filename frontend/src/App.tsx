@@ -7,6 +7,7 @@ import AssessmentDetail from './pages/AssessmentDetail';
 import MarkAnswers from './pages/MarkAnswers';
 import Reports from './pages/Reports';
 import ReportDetail from './pages/ReportDetail';
+import QuickTest from './pages/QuickTest';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/" element={<RootLayout />}>
           <Route index element={<Home />} />
           <Route path="upload-assessment" element={<UploadAssessment />} />
+          <Route path="quick-test" element={<QuickTest />} />
           <Route path="assessments" element={<AssessmentsList />} />
           <Route path="assessments/:id" element={<AssessmentDetail />} />
           <Route path="mark-answers" element={<MarkAnswers />} />

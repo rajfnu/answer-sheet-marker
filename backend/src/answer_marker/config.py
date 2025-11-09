@@ -7,6 +7,11 @@ All configuration values can be set via environment variables or .env file.
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 from pathlib import Path
+import os
+
+# Determine project root (3 levels up from this file)
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
+ENV_FILE = PROJECT_ROOT / ".env"
 
 
 class Settings(BaseSettings):
@@ -136,7 +141,7 @@ class Settings(BaseSettings):
 
     # Pydantic Settings configuration
     model_config = SettingsConfigDict(
-        env_file="../.env",  # Look for .env in parent directory (project root)
+        env_file=str(ENV_FILE),  # Look for .env in project root
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore"  # Ignore extra environment variables

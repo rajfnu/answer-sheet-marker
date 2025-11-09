@@ -91,28 +91,36 @@ class BaseAgent(ABC):
         system_prompt: Optional[str] = None,
         tools: Optional[List[Dict[str, Any]]] = None,
         tool_choice: Optional[Dict[str, Any]] = None,
+        retry_count: int = 0,
     ) -> Any:
-        """Call Claude API with error handling.
+        """Call Claude API with error handling and retry logic for Gemini.
 
         Args:
             user_message: User message content
             system_prompt: Override system prompt (uses config default if None)
             tools: Tools to provide to Claude (uses config default if None)
             tool_choice: Tool choice configuration
+            retry_count: Current retry attempt (for internal use)
 
         Returns:
             Claude API response
 
         Raises:
-            Exception: If API call fails
+            Exception: If API call fails after retries
         """
         try:
-            logger.debug(f"[{self.config.name}] Calling Claude API")
+            logger.debug(f"[{self.config.name}] Calling Claude API (attempt {retry_count + 1})")
+
+            # Use slightly higher temperature on retry for more stable JSON generation
+            temperature = self.config.temperature
+            if retry_count > 0:
+                temperature = min(0.3, self.config.temperature + 0.2)
+                logger.debug(f"[{self.config.name}] Using temperature={temperature} for retry")
 
             response = self.client.messages.create(
                 model=self.config.model,
                 max_tokens=self.config.max_tokens,
-                temperature=self.config.temperature,
+                temperature=temperature,
                 system=system_prompt or self.config.system_prompt,
                 messages=[{"role": "user", "content": user_message}],
                 tools=tools or self.config.tools,
@@ -126,6 +134,29 @@ class BaseAgent(ABC):
             )
 
             return response
+
+        except ValueError as e:
+            error_msg = str(e)
+
+            # Check if it's a Gemini MALFORMED_FUNCTION_CALL error
+            if "malformed function call" in error_msg.lower() and retry_count == 0:
+                logger.warning(
+                    f"[{self.config.name}] Gemini returned MALFORMED_FUNCTION_CALL. "
+                    f"Retrying with temperature=0.1 for more stable output..."
+                )
+
+                # Retry once with slightly higher temperature for more stability
+                return await self._call_claude(
+                    user_message=user_message,
+                    system_prompt=system_prompt,
+                    tools=tools,
+                    tool_choice=tool_choice,
+                    retry_count=retry_count + 1
+                )
+            else:
+                # Re-raise if not a malformed function call or already retried
+                logger.error(f"[{self.config.name}] API call failed: {e}")
+                raise
 
         except Exception as e:
             logger.error(f"[{self.config.name}] API call failed: {e}")

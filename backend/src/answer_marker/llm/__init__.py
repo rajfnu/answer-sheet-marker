@@ -9,6 +9,7 @@ from .factory import create_llm_client, LLMProvider
 from .anthropic_adapter import AnthropicAdapter
 from .ollama_adapter import OllamaAdapter
 from .openai_adapter import OpenAIAdapter
+from .google_adapter import GoogleAdapter
 
 __all__ = [
     "BaseLLMClient",
@@ -19,4 +20,5 @@ __all__ = [
     "AnthropicAdapter",
     "OllamaAdapter",
     "OpenAIAdapter",
+    "GoogleAdapter",
 ]

@@ -8,6 +8,7 @@ from .base import BaseLLMClient
 from .anthropic_adapter import AnthropicAdapter
 from .ollama_adapter import OllamaAdapter
 from .openai_adapter import OpenAIAdapter
+from .google_adapter import GoogleAdapter
 
 
 class LLMProvider(str, Enum):
@@ -16,6 +17,7 @@ class LLMProvider(str, Enum):
     OLLAMA = "ollama"
     OPENAI = "openai"
     TOGETHER = "together"  # Uses OpenAI-compatible API
+    GOOGLE = "google"  # Google Gemini
 
 
 def create_llm_client(
@@ -73,6 +75,13 @@ def create_llm_client(
         ...     api_key="...",
         ...     base_url="https://api.together.xyz/v1"
         ... )
+
+        >>> # Google Gemini
+        >>> client = create_llm_client(
+        ...     provider="google",
+        ...     model="gemini-2.0-flash-exp",
+        ...     api_key="..."
+        ... )
     """
     provider = provider.lower()
 
@@ -109,6 +118,15 @@ def create_llm_client(
             model=model,
             api_key=api_key,
             base_url=together_url,
+            **kwargs
+        )
+
+    elif provider == LLMProvider.GOOGLE:
+        if not api_key:
+            raise ValueError("API key required for Google Gemini")
+        return GoogleAdapter(
+            model=model,
+            api_key=api_key,
             **kwargs
         )
 

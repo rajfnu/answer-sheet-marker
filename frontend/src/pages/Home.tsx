@@ -10,6 +10,13 @@ const features = [
     color: 'text-blue-500',
   },
   {
+    icon: Zap,
+    title: 'Quick Test',
+    description: 'Test AI marking with a single question without uploading files',
+    to: '/quick-test',
+    color: 'text-yellow-500',
+  },
+  {
     icon: FolderOpen,
     title: 'View Assessments',
     description: 'Browse all uploaded assessments and their marking status',

@@ -18,7 +18,7 @@ from .exceptions import (
     generic_exception_handler,
     validation_exception_handler,
 )
-from .routes import health, marking
+from .routes import health, marking, quick_test
 
 # Setup logging first thing
 setup_logging()
@@ -57,6 +57,7 @@ def create_app() -> FastAPI:
     # Register routes
     app.include_router(health.router)
     app.include_router(marking.router)
+    app.include_router(quick_test.router)
 
     # Startup event
     @app.on_event("startup")
